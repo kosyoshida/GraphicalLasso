@@ -9,6 +9,7 @@ Graphical Lasso
 print(__doc__)
 from sklearn import preprocessing
 from sklearn import linear_model
+import matplotlib.pylab as plt
 import numpy as np
 
 
@@ -19,16 +20,13 @@ class GraphLasso:
     # rho is regularizer
     
     # initialization
-    def __init__(self,X=None,A=None,S=None,rho=0.1,
-                 maxItr=1e+3,tol=1e-2):
-        self.X=X
-        self.A=A
-        self.S=S
+    def __init__(self, rho=0.1, maxItr=1e+3, tol=1e-2):
+
         self.rho=rho
         self.maxItr=int(maxItr)
         self.tol=tol
         self.scaler=None
-        self.history=[]
+
         
     # graphical lasso    
     def fit(self,X):
@@ -44,7 +42,6 @@ class GraphLasso:
         
         clf=linear_model.Lasso(alpha=self.rho)
         # block cordinate descent
-        # we wanna find l and lmbd 
         for i in range(self.maxItr):
             for j in range(n_features):
                 R,s,sii=self.get(S)
@@ -70,7 +67,7 @@ class GraphLasso:
                 A=self.put(L,l,lmbd)
                 invA=self.put(W,w,sigma)
                 S=self.put(R,s,sii)
-                self.history.append(np.linalg.norm(A-A_old,ord=2))
+
             
             if np.linalg.norm(A-A_old,ord=2)<self.tol:
                 break
@@ -100,3 +97,22 @@ class GraphLasso:
         X[0][0]=sii
         
         return X
+if __name__ == '__main__':
+    np.random.seed(1)
+    
+    t=np.arange(100.)
+    x1=np.sin(t/10)
+        
+    X=np.random.normal(size=[100,10])
+    X[:,0]=x1
+    X[:,1]=x1
+    X[:,2]=-x1
+    
+    gl=GraphLasso(rho=0.01)
+    gl.fit(X)
+    
+    mesh=range(10)
+    X,Y=np.meshgrid(mesh,mesh)
+    plt.figure()
+    plt.pcolormesh(X,Y,gl.A)
+    plt.colorbar() 
